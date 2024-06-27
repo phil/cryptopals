@@ -20,6 +20,29 @@ class String
   def convert_hexchars_to_chars
     self.convert_hexchars_to_bytes.map(&:chr)
   end
+
+  def plaintext_score
+    # Simple score of common chars we'd expect in a string
+    # assumes comparable strings are of equal length
+    scores = self.chars.map do |char|
+      case char
+      when " "
+        10
+      when /[aeiou]/
+        5
+      when /[a-z]/, /[A-Z]/
+        2
+      when /[0-9]/
+        2
+      when %w(' " ! ? , . @ £ $ % ^ & *)
+        1
+      else
+        -1
+      end
+    end
+
+    scores.sum
+  end
 end
 
 RSpec.describe "Crypto Challenges Set 1" do
@@ -40,6 +63,12 @@ RSpec.describe "Crypto Challenges Set 1" do
     describe "#convert_hexchars_to_chars" do
       it "converts a hex string to chars" do
         expect("59656c6c6f77205375626d6172696e65".convert_hexchars_to_chars.join).to eq("Yellow Submarine")
+      end
+    end
+
+    describe "#plaintext_score" do
+      it "attempts a very simple check to see if a plaintext string is a sentence" do
+        expect("Cooking MC's like a pound of bacon".plaintext_score).to eq(146)
       end
     end
   end
@@ -64,6 +93,24 @@ RSpec.describe "Crypto Challenges Set 1" do
   end
 
   describe "Challenge 3: Single-byte XOR cipher" do
+    let(:cypher_text) {"1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"}
+
+    it "finds the top matches" do
+      key_score_plaintexts = (0..255).map do |i|
+        plaintext = cypher_text.convert_hexchars_to_bytes.map { |byte| byte ^ i }.map(&:chr).join
+        [i.chr, plaintext.plaintext_score, plaintext]
+      end
+
+      expect(key_score_plaintexts.sort{|a,b| a[1] <=> b[1]}.reverse[0..2]).to eq([
+          ["X", 146, "Cooking MC's like a pound of bacon"],
+          ["^", 74, "Eiimoha&KE!u&jomc&g&vishb&i`&dgeih"],
+          ["R", 71, "Ieeacdm*GI-y*fcao*k*ze\x7Fdn*el*hkied"]
+      ])
+    end
+
+    it "is X" do
+      expect(cypher_text.convert_hexchars_to_bytes.map { |byte| byte ^ "X".ord }.map(&:chr).join).to eq("Cooking MC's like a pound of bacon")
+    end
   end
 
   describe "Challenge 4: Detect single-character XOR" do
