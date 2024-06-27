@@ -54,6 +54,13 @@ RSpec.describe "Crypto Challenges Set 1" do
   end
 
   describe "Challenge 2: Fixed XOR" do
+    let(:source_a) { "1c0111001f010100061a024b53535009181c" }
+    let(:source_b) { "686974207468652062756c6c277320657965" }
+    let(:target) { "746865206b696420646f6e277420706c6179" }
+
+    it "xor's source_a with source_b to match the target" do
+      expect(source_a.convert_hexchars_to_bytes.zip(source_b.convert_hexchars_to_bytes).map {|a, b| a ^ b }.map { |x| x.to_s(16) }.join).to eq(target)
+    end
   end
 
   describe "Challenge 3: Single-byte XOR cipher" do
